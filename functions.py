@@ -1,7 +1,7 @@
-import pandas as pd
 import urllib
 import json
 import re
+import pandas as pd
 
 # WIKIPEDIA DICTIONARY ---------------------
 
@@ -117,3 +117,103 @@ def dictionnary_by_descending_wiki_child_categories(CAT=None, max_step=6):
 
     out = {"items": VINS_ITEM, "scrawl_cat": VINS_CAT_DONE}
     return out
+
+
+Wiki_to_ciqual = {
+    'BIERES_BLANCHES': {
+        'ciqual' : 'Bière blanche',
+        'wiki': ['Bière blanche']
+    },
+    'BIERES_BRUNES':  {
+        'ciqual' : 'Bière blanche',
+        'wiki': ['Bière brune']
+    },
+    'BIERES_AUTRES': {
+        'ciqual' : 'Bière blanche',
+        'wiki': ['Bière blonde','Marque de bière'],
+        'max_child': 3
+    },
+    'VINS':  {
+        'ciqual' : 'Vin rouge',
+        'wiki':  ['Vin AOC en France par région','Vin_français']
+    },
+    'FROMAGES': {
+        'ciqual': 'Fromage (aliment moyen)',
+        'wiki': ['Marque_de_fromage_en_France','Fromage_français']
+    },
+    'CHARCUTERIE': {
+        'ciqual' : 'Charcuterie (aliment moyen)',
+        'wiki': ['Charcuterie'],
+        'max_child': 2
+    },
+    'CHIPS': {
+        'ciqual' : 'Chips de pommes de terre nature ou aromatisées, standard',
+        'wiki': ['Marque_de_chips']
+    }, 
+    'CAFES':  {
+        'ciqual' : 'Café, moulu',
+        'wiki': ['Marque de café']
+    },
+    'VIANDES': {
+        'ciqual' :  'Viande cuite (aliment moyen)',
+        'wiki': ['Découpe de viande','Grillade','Viande bovine']
+    },
+    'LIQUEUR' :  {
+        'ciqual' : 'Liqueur',
+        'wiki': ['Marque de liqueur']
+    },
+    'COGNAC': {
+        'ciqual': 'Eau de vie de vin, type armagnac, cognac',
+        'wiki': ['Marque de cognac']
+    },
+      'RHUM': {
+        'ciqual': 'Rhum',
+        'wiki': ['Marque de rhum']
+    },
+    'VERMOUTH':{
+        'ciqual': 'Liqueur',
+        'wiki':[ 'Marque de vermouth']
+    },
+    'WHISKY':{
+        'ciqual': 'Whisky',
+        'wiki':[ 'Marque de whisky']
+    },
+    'VODKA': {
+        'ciqual': 'Vodka',
+        'wiki': ['Marque de vodka']
+    }
+}
+
+
+def create_dataframe_wikipedia(Wiki_to_ciqual):
+    wiki_products = pd.DataFrame(columns = ['LIBELLE','alim_nom_fr'])
+
+    for d in Wiki_to_ciqual.keys():
+        print('____Loading From Wikipedia the following categories ____')
+        print(Wiki_to_ciqual[d])
+        max_step = 10
+        if 'max_child' in Wiki_to_ciqual[d].keys():
+            max_step = Wiki_to_ciqual[d]['max_child']
+        items = dictionnary_by_descending_wiki_child_categories(Wiki_to_ciqual[d]['wiki'], max_step = max_step)
+        
+        print('-> Liste des produits wikipédia ajouté à Ciqual:')
+        print(items)
+        print('_________________________________________________________')
+        
+        items = pd.DataFrame({'LIBELLE':  [re.sub('-',' ',x) for x in items['items']], 'alim_nom_fr': Wiki_to_ciqual[d]['ciqual']})
+        #items = cleanlibel.clean_labels(items, yvar = 'LIBELLE', outvar = 'libel_clean_wiki')
+        wiki_products = pd.concat([wiki_products, items])
+
+        
+    # --- filter products with double meaning
+    wiki_products = wiki_products[~wiki_products['libel_clean_wiki'].isin(['MENU','SOL',"NUMBER ONE","CHAT NOIR","CHTI CREMEUX","JB","DEMI SEL","POIRE"])]
+
+    # --- Add short-cut for common products which have long descriptive names in ciqual - which does not favor matching.
+    items = pd.DataFrame({'LIBELLE':  ['Citron','Mangue','Orange','Coca-cola','Fraise','Cerise','Yaourt','Pizza','Pizza chorizo','Kiwi','Pommes de terre','Ananas','Tomate cerise','Muffin','Bière'], 
+                        'alim_nom_fr': ['Citron vert ou Lime, pulpe, cru','Orange, pulpe, crue','Mangue, pulpe, crue','Cola, teneur en sucre et édulcorant inconnue (aliment moyen)','Fraise, crue','Cerise, dénoyautée, crue','Yaourt ou spécialité laitière nature ou aux fruits (aliment moyen)','Pizza (aliment moyen)','Pizza (aliment moyen)','Kiwi, pulpe et graines, cru','Pomme de terre, sans peau, rôtie/cuite au four','Ananas Victoria ou ananas Queen Victoria, pulpe crue, prélevé à La Réunion Ananas comosus (L.) merr var. Queen)','Tomate cerise, crue','Muffin anglais, complet, petit pain spécial, préemballé','Bière blanche']})
+
+    #items = cleanlibel.clean_labels(items, yvar = 'LIBELLE', outvar = 'libel_clean_wiki')         
+    print('_________ Short-cut for common products which have long descriptive names in ciqual ____ ')
+    print(items)
+    wiki_products = pd.concat([wiki_products, items])
+    return wiki_products
