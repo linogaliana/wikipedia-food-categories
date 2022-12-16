@@ -23,6 +23,7 @@ If we want to retrieve the content of the subcategory _"Vin AOC en France par r�
 
 
 ```python
+import functions as fc
 dict_wine = fc.dictionnary_by_descending_wiki_child_categories(
     ["Vin_français", "Vin AOC en France par région"],
     max_step = 3)
@@ -35,6 +36,7 @@ In this section, we show how to generalize this approach by using a handmade map
 In our case, categories are based on [`CIQUAL` dataset](https://ciqual.anses.fr/).
 
 ```python
+import functions as fc
 df = fc.create_dataframe_wikipedia(fc.Wiki_to_ciqual)
 ```
 
